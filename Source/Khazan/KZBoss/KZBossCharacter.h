@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "BossAI/EBossPhase.h"
 #include "KZBossCharacter.generated.h"
 
 UCLASS()
@@ -26,4 +27,13 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+public:
+
+	// 현재 보스의 페이즈
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Boss State")
+	EBossPhase CurrentPhase;
+
+	// 이동속도 변수
+	UPROPERTY(BlueprintReadOnly, Category = "Movement")
+	float CurrentMovementSpeed;
 };
