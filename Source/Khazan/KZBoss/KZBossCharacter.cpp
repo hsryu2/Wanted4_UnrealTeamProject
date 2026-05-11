@@ -45,9 +45,8 @@ void AKZBossCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 void AKZBossCharacter::PlayAttackMontage()
 {
-	if (BasicAttackMontage)
+	if (BasicAttackMontage && BackStepAttackMontage)
 	{
-		CurrentMontage = nullptr;
 		
 		UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 		if (AnimInstance)
@@ -60,14 +59,12 @@ void AKZBossCharacter::PlayAttackMontage()
 			
 			if (RandomIdx == 4)	// 4번째 공격은 백스템 공격으로 다른 몽타주 재생
 			{
-				CurrentMontage = BackStepAttackMontage;
-				AnimInstance->Montage_Play(CurrentMontage);
+				AnimInstance->Montage_Play(BackStepAttackMontage);
 			}
 			else {
 				// 몽타주 재생
-				CurrentMontage = BasicAttackMontage;
-				AnimInstance->Montage_Play(CurrentMontage);
-				AnimInstance->Montage_JumpToSection(SectionName, CurrentMontage);
+				AnimInstance->Montage_Play(BasicAttackMontage);
+				AnimInstance->Montage_JumpToSection(SectionName, BasicAttackMontage);
 			}
 
 
@@ -100,20 +97,9 @@ void AKZBossCharacter::ExecuteBackStep()
 	{
 		if (AIC->GetPathFollowingComponent())
 		{
+			// 이동 중이던 경로 추적을 중단하여 백스텝 공격이 원활하게 실행되도록 함
 			AIC->GetPathFollowingComponent()->AbortMove(*AIC, FPathFollowingResultFlags::MovementStop);
 		}
-
-		//if (AIC->GetBrainComponent())
-		//{
-		//	AIC->GetBrainComponent()->PauseLogic("Backstepping");
-		//}
-
-		// UPathFollowingComponent를 완전한 형식으로 인식시키기 위해 헤더를 반드시 포함해야 함
-		//UPathFollowingComponent* PathComp = AIC->GetPathFollowingComponent();
-		//if (PathComp)
-		//{
-		//	PathComp->AbortMove(*AIC, FPathFollowingResultFlags::MovementStop);
-		//}
 	}
 
 	GetCharacterMovement()->SetMovementMode(MOVE_Falling);
