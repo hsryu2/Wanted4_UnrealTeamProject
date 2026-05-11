@@ -60,6 +60,9 @@ protected:
 	TObjectPtr<class UInputAction> JumpAction;
 
 	UPROPERTY(EditAnywhere, Category = Input, BlueprintReadOnly)
+	TObjectPtr<class UInputAction> DodgeAction;
+
+	UPROPERTY(EditAnywhere, Category = Input, BlueprintReadOnly)
 	TObjectPtr<class UInputAction> AttackAction;
 
 	UPROPERTY(EditAnywhere, Category = Input, BlueprintReadOnly)
@@ -71,13 +74,22 @@ protected:
 	UPROPERTY(EditAnywhere, Category = Input, BlueprintReadOnly)
 	TObjectPtr<class UInputAction> StrongAttackAction;
 
+	UPROPERTY(EditAnywhere, Category = Input, BlueprintReadOnly)
+	TObjectPtr<class UInputAction> GuardAction;
+
+
 	void Move(const FInputActionValue& value);
 	void Sprint(const FInputActionValue& value);
 	void StopSprint(const FInputActionValue& value);
 	void Look(const FInputActionValue& value);
+	void Dodge(const FInputActionValue& value);
 	void WeakAttack(const FInputActionValue& value);
 	void StrongAttack(const FInputActionValue& value);
+	void Guard(const FInputActionValue& value);
+	void StopGuard(const FInputActionValue& value);
 
 
-	
+protected:
+
+
 };

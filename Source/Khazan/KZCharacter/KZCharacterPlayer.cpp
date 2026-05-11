@@ -67,6 +67,14 @@ AKZCharacterPlayer::AKZCharacterPlayer()
 		JumpAction = JumpActionRef.Object;
 	}
 
+	static ConstructorHelpers::FObjectFinder<UInputAction> DodgeActionRef{
+	TEXT("/Game/Khazan/Input/Action/IA_Dodge.IA_Dodge")
+	};
+	if (DodgeActionRef.Succeeded())
+	{
+		DodgeAction = DodgeActionRef.Object;
+	}
+
 	static ConstructorHelpers::FObjectFinder<UInputAction> WeakAttackActionRef{
 		TEXT("/Game/Khazan/Input/Action/IA_Attack.IA_Attack")
 	};
@@ -81,6 +89,14 @@ AKZCharacterPlayer::AKZCharacterPlayer()
 	if (StrongAttackActionRef.Succeeded())
 	{
 		StrongAttackAction = StrongAttackActionRef.Object;
+	}
+
+	static ConstructorHelpers::FObjectFinder<UInputAction> GuardActionRef{
+	TEXT("/Game/Khazan/Input/Action/IA_Guard.IA_Guard")
+	};
+	if (GuardActionRef.Succeeded())
+	{
+		GuardAction = GuardActionRef.Object;
 	}
 
 }
@@ -131,6 +147,13 @@ void AKZCharacterPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 			this,
 			&ACharacter::Jump
 		);
+		
+		EnhancedInputComponent->BindAction(
+			DodgeAction,
+			ETriggerEvent::Triggered,
+			this,
+			&AKZCharacterPlayer::Dodge
+		);
 
 		EnhancedInputComponent->BindAction(
 			SprintAction,
@@ -157,6 +180,18 @@ void AKZCharacterPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 			ETriggerEvent::Started,
 			this,
 			&AKZCharacterPlayer::StrongAttack
+		);
+		EnhancedInputComponent->BindAction(
+			GuardAction,
+			ETriggerEvent::Started,
+			this,
+			&AKZCharacterPlayer::Guard
+		);
+		EnhancedInputComponent->BindAction(
+			GuardAction,
+			ETriggerEvent::Completed,
+			this,
+			&AKZCharacterPlayer::StopGuard
 		);
 	}
 
@@ -238,14 +273,78 @@ void AKZCharacterPlayer::Look(const FInputActionValue& value)
 	AddControllerPitchInput(RotationValue.Y * -1);
 }
 
+// 회피
+void AKZCharacterPlayer::Dodge(const FInputActionValue& value)
+{
+	if (GetCharacterMovement()->IsFalling())
+	{
+		return;
+	}
+
+	FVector InputVector = GetLastMovementInputVector();
+
+	// 아무런 입력 없이 회피 누를 시 Back 으로 회피 몽타주 실행.
+	if (InputVector.IsNearlyZero())
+	{
+		PlayDodgeMontage("Dodge_B");
+		return;
+	}
+
+
+	// UnrotateVector -> 캐릭터가 바라보는 정면을 0도로 놓고 계산.
+	FVector LocalInput = GetCharacterMovement()->GetLastUpdateRotation().UnrotateVector(InputVector);
+
+	// 입력을 했을 때 회피를 할 8방향을 정하기 위해 Atan2를 이용.
+	float Radians = FMath::Atan2(LocalInput.Y, LocalInput.X);
+	float Angle = FMath::RadiansToDegrees(Radians);
+
+	FName TargetSection = DetermineDodgeSection(Angle);
+	PlayDodgeMontage(TargetSection);
+
+
+}
+
+// 약공격
 void AKZCharacterPlayer::WeakAttack(const FInputActionValue& value)
 {
+	if (GetCharacterMovement()->IsFalling())
+	{
+		return;
+	}
+
 	ProcessAttackCommand(EAttackType::Weak);
 }
 
+// 강공격
 void AKZCharacterPlayer::StrongAttack(const FInputActionValue& value)
 {
+	if (GetCharacterMovement()->IsFalling())
+	{
+		return;
+	}
+
 	//StrongAttackBegin();
 	ProcessAttackCommand(EAttackType::Strong);
+}
+
+void AKZCharacterPlayer::Guard(const FInputActionValue& value)
+{
+	if (GetCharacterMovement()->IsFalling() || CurrentAttackType != EAttackType::None)
+	{
+		return;
+	}
+
+	PlayGuardMontage();
+}
+
+void AKZCharacterPlayer::StopGuard(const FInputActionValue& value)
+{
+	if (GetCharacterMovement()->IsFalling() || CurrentAttackType != EAttackType::None)
+	{
+		return;
+	}
+	bIsGuarding = false;
+	GetCharacterMovement()->MaxWalkSpeed = 600.0f;
+	StopAnimMontage(GuardMontage);
 }
 
