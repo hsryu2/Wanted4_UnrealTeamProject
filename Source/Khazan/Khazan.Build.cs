@@ -7,9 +7,11 @@ public class Khazan : ModuleRules
 	public Khazan(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
-	
-		PublicDependencyModuleNames.AddRange(new string[] { 
-			"Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput" });
+
+        PublicIncludePaths.AddRange(new string[] { "Khazan" });
+
+        PublicDependencyModuleNames.AddRange(new string[] { 
+			"Core", "CoreUObject", "Engine", "InputCore","EnhancedInput","UMG" });
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });
 

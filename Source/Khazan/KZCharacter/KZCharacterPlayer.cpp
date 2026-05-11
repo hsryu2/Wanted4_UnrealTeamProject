@@ -7,6 +7,10 @@
 #include "InputMappingContext.h"
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
+#pragma region 선환 헤더 추가 
+#include "Component/StatComponent.h"
+#include "UI/PlayerUIWidget.h"
+#pragma endregion 
 #include "GameFramework/CharacterMovementComponent.h"
 
 // Sets default values
@@ -32,6 +36,15 @@ AKZCharacterPlayer::AKZCharacterPlayer()
 
 	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Player Camera"));
 	Camera->SetupAttachment(SpringArm);
+
+
+	/* 5_11 선환 추가 Actor Component */
+	
+	// Actor Component
+	m_pStatComponent = CreateDefaultSubobject<UStatComponent>(TEXT("StatComponent"));
+
+	/* -----------------------------------  */
+
 
 	// IMC 에셋 로드
 	static ConstructorHelpers::FObjectFinder<UInputMappingContext> DeafultContextRef(
@@ -83,6 +96,17 @@ AKZCharacterPlayer::AKZCharacterPlayer()
 		StrongAttackAction = StrongAttackActionRef.Object;
 	}
 
+	// 5_11 선환 추가 
+	static ConstructorHelpers::FObjectFinder<UInputAction> UiTestActionRef{
+		TEXT("/Game/Input/Actions/IA_UiTest.IA_UiTest")
+	};
+	if (UiTestActionRef.Succeeded())
+	{
+		UiTestAction = UiTestActionRef.Object;
+	}
+	
+
+
 }
 
 // Called when the game starts or when spawned
@@ -93,6 +117,26 @@ void AKZCharacterPlayer::BeginPlay()
 	SetCharacterControl();
 	
 }
+
+
+void AKZCharacterPlayer::SetupPlayerUiWidget(UPlayerUIWidget* _InPlayerUiWidget)
+{
+	// 설정할 플레이어의 체력 및 최대 체력
+
+	m_pStatComponent->SetUp_stat_Hp(100, 100);
+
+	if (_InPlayerUiWidget)
+	{
+		// 초기값 초기화
+		_InPlayerUiWidget->SetUp_Ui_Hp(m_pStatComponent->GetCurrentHp(), m_pStatComponent->GetMaxHp());
+
+
+		// Ui widget의 default 값 초기화 하기.
+		m_pStatComponent->Delegate_OnHpChanged.AddUObject(_InPlayerUiWidget, &UPlayerUIWidget::UpdateHp);
+		m_pStatComponent->Delegate_OnHpChanged.AddUObject(_InPlayerUiWidget, &UPlayerUIWidget::UpdateProgressBarHp);
+	}
+}
+
 
 // Called every frame
 void AKZCharacterPlayer::Tick(float DeltaTime)
@@ -157,6 +201,14 @@ void AKZCharacterPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 			ETriggerEvent::Started,
 			this,
 			&AKZCharacterPlayer::StrongAttack
+		);
+
+
+		EnhancedInputComponent->BindAction(
+			UiTestAction,
+			ETriggerEvent::Started,
+			this,
+			&AKZCharacterPlayer::UiTest
 		);
 	}
 
@@ -248,4 +300,15 @@ void AKZCharacterPlayer::StrongAttack(const FInputActionValue& value)
 	//StrongAttackBegin();
 	ProcessAttackCommand(EAttackType::Strong);
 }
+
+
+// 5_11 선환 추가 
+void AKZCharacterPlayer::UiTest()
+{
+	m_pStatComponent->Apply_Damage(50);
+
+	m_pStatComponent->Delegate_OnHpChanged.Broadcast(m_pStatComponent->GetCurrentHp());
+
+}
+
 

@@ -7,13 +7,17 @@
 #include "InputActionValue.h"
 #include "KZCharacterBase.h"
 #include "../Interface/IInteractableTarget.h"
+#include "Interface/PlayerUiWidget_Interface.h"
 #include "KZCharacterPlayer.generated.h"
 
 // 전방선언.
 class UInputAction;
 
 UCLASS()
-class KHAZAN_API AKZCharacterPlayer : public AKZCharacterBase, public IIInteractableTarget
+class KHAZAN_API AKZCharacterPlayer : 
+	public AKZCharacterBase,
+	public IIInteractableTarget,
+	public IPlayerUiWidget_Interface /* 5_11 선환 추가 ( UI Widget과 Player 의존성 없애기 위해 인터페이스 구현 ) */
 {
 	GENERATED_BODY()
 
@@ -26,6 +30,9 @@ protected:
 	// 입력 매핑 컨텍스트를 넣는데엔 beginplay
 	virtual void BeginPlay() override;
 
+
+	// IPlayerUiWidget_Interface을(를) 통해 상속됨  ( 5_11 선환 추가 ) 
+	void SetupPlayerUiWidget(UPlayerUIWidget* _InPlayerUiWidget) override;
 
 public:	
 	// Called every frame
@@ -49,6 +56,10 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, Category = Camera)
 	TObjectPtr<class UCameraComponent> Camera;
+
+	// 5_11 선환 추가
+	UPROPERTY(VisibleAnywhere, Category = Stat)
+	TObjectPtr<class UStatComponent> m_pStatComponent; 
 
 	// 입력 액션
 protected:
@@ -79,13 +90,20 @@ protected:
 	UPROPERTY(EditAnywhere, Category = Input, BlueprintReadOnly)
 	TObjectPtr<class UInputAction> StrongAttackAction;
 
+	// 5_11 선환 ( Ui Test를 위해 임시 추가 ) 
+	UPROPERTY(EditAnywhere, Category = Input, BlueprintReadOnly)
+	TObjectPtr<class UInputAction> UiTestAction;
+
+
 	void Move(const FInputActionValue& value);
 	void Sprint(const FInputActionValue& value);
 	void StopSprint(const FInputActionValue& value);
 	void Look(const FInputActionValue& value);
 	void WeakAttack(const FInputActionValue& value);
 	void StrongAttack(const FInputActionValue& value);
+	void UiTest();
 
 
-	
+
+
 };
