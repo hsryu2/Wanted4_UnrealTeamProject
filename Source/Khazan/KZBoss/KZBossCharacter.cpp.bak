@@ -100,6 +100,7 @@ void AKZBossCharacter::ExecuteBackStep()
 			// 이동 중이던 경로 추적을 중단하여 백스텝 공격이 원활하게 실행되도록 함
 			AIC->GetPathFollowingComponent()->AbortMove(*AIC, FPathFollowingResultFlags::MovementStop);
 		}
+
 	}
 
 	GetCharacterMovement()->SetMovementMode(MOVE_Falling);
