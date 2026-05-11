@@ -57,8 +57,4 @@ public:
 	// 이동속도 변수
 	UPROPERTY(BlueprintReadOnly, Category = "Movement")
 	float CurrentMovementSpeed;
-
-	// 재생할 몽타주를 저장하는 변수
-	UPROPERTY(BlueprintReadOnly, Category ="Combat")
-	UAnimMontage* CurrentMontage;
 };

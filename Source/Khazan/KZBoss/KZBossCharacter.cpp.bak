@@ -93,7 +93,7 @@ void AKZBossCharacter::PlayAttackMontage()
 	}
 }
 
-void AKZBossCharacter::ExecuteBackStep()
+void AKZBossCharacter::ExecuteBackStep(float Distance, float UpForce)
 {
 	AAIController* AIC = Cast<AAIController>(GetController());
 	if (AIC)
@@ -118,7 +118,7 @@ void AKZBossCharacter::ExecuteBackStep()
 
 	GetCharacterMovement()->SetMovementMode(MOVE_Falling);
 	FVector BackDir = -GetActorForwardVector();
-	FVector LaunchVelocity = 0.66 * (BackDir * Distance + FVector(0, 0, UpForce));
+	FVector LaunchVelocity = BackDir * Distance + FVector(0, 0, UpForce);
 	UE_LOG(LogTemp, Warning, TEXT("BackStep Execute! Vector: %s"), *LaunchVelocity.ToString());
 	LaunchCharacter(LaunchVelocity, true, true);
 }
