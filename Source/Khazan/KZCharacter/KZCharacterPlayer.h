@@ -6,13 +6,14 @@
 #include "GameFramework/Character.h"
 #include "InputActionValue.h"
 #include "KZCharacterBase.h"
+#include "../Interface/IInteractableTarget.h"
 #include "KZCharacterPlayer.generated.h"
 
 // 전방선언.
 class UInputAction;
 
 UCLASS()
-class KHAZAN_API AKZCharacterPlayer : public AKZCharacterBase
+class KHAZAN_API AKZCharacterPlayer : public AKZCharacterBase, public IIInteractableTarget
 {
 	GENERATED_BODY()
 
@@ -25,6 +26,7 @@ protected:
 	// 입력 매핑 컨텍스트를 넣는데엔 beginplay
 	virtual void BeginPlay() override;
 
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -35,6 +37,12 @@ public:
 
 
 	// 카메라
+	 
+	
+	// 인터페이스 함수 오버라이드
+	virtual FName GetTargetType() const override { return FName("Player"); }
+	virtual bool IsAttackable() const override { return true; }
+
 protected:
 	UPROPERTY(VisibleAnywhere, Category = Camera)
 	TObjectPtr<class USpringArmComponent> SpringArm;

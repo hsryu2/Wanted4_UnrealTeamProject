@@ -27,7 +27,18 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	// 공격 실행 함수 (몽타주 재생)
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	void PlayAttackMontage();
+
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	void ExecuteBackStep(float Distance = 3000.0f, float UpForce= 600.0f);
+
 public:
+
+	// 몽타주 변수 (에디터에서 설정 가능)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat")
+	class UAnimMontage* BasicAttackMontage;
 
 	// 현재 보스의 페이즈
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Boss State")
