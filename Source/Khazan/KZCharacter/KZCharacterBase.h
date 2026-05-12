@@ -57,6 +57,8 @@ protected:
 
 	void WeakAttackBegin();
 
+	void ChargeWeakAttackBegin(bool bIsCharged);
+
 	void StrongAttackBegin();
 
 	void AttackActionEnd(UAnimMontage* TargetMontage, bool bInterrupted);
@@ -85,6 +87,7 @@ protected:
 	// IKZAnimationAttackInterface을(를) 통해 상속됨
 	void LaunchCharacterNotify(float LaunchForce) override;
 
+	bool bIsCharging = false;
 
 	// 가드
 protected:

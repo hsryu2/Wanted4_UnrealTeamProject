@@ -112,7 +112,14 @@ protected:
 	void StopGuard(const FInputActionValue& value);
 	void UiTest();
 
-
+	// Â÷Â¡ °ø°Ý
+protected:
+	void WeakAttackTriggered(const FInputActionValue& value);
+	void WeakAttackCompleted(const FInputActionValue& value);
+	
+	float CurrentChargeTime = 0.0f;
+	
+	const float ChargeThreshold = 0.2f;
 
 
 };

@@ -127,9 +127,19 @@ void AKZCharacterBase::AttackCheck()
 			if (CurrentCombo < MaxCombo && NextAttackType == EAttackType::Weak)
 			{
 				CurrentCombo++;
-				FName NextSection = *FString::Printf(TEXT("WeakAtk0%d"), CurrentCombo);
+				FName NextSection;
+				// 차징 상태에 따라 일반약공격 혹은 차지공격으로 전환.
+				if (bIsCharging)
+				{
+					NextSection = *FString::Printf(TEXT("ChargeWait0%d"), CurrentCombo);
+				}
+				else
+				{
+					NextSection = *FString::Printf(TEXT("WeakAtk0%d"), CurrentCombo);
+				}
 				AnimInstance->Montage_JumpToSection(NextSection, WeakAttackMontage);
 			}
+			// 다음 공격 예약이 강공격인 경우.
 			else if (NextAttackType == EAttackType::Strong)
 			{
 				CurrentAttackType = EAttackType::Strong;
@@ -142,6 +152,7 @@ void AKZCharacterBase::AttackCheck()
 	}
 }
 
+// 약 or 강공격 시작 함수.
 void AKZCharacterBase::ProcessAttackCommand(EAttackType AttackType)
 {
 	// 약공격과 강공격의 입력을 받아서 현재 입력 혹은 다음 입력의 타입을 설정.
@@ -174,10 +185,12 @@ void AKZCharacterBase::WeakAttackBegin()
 	
 
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-	if (AnimInstance)
+	if (AnimInstance && !AnimInstance->Montage_IsPlaying(WeakAttackMontage))
 	{
 		// 몽타주 재생.
 		AnimInstance->Montage_Play(WeakAttackMontage);
+		FName JumpSection = *FString::Printf(TEXT("ChargeWait0%d"), CurrentCombo);
+		AnimInstance->Montage_JumpToSection(JumpSection, WeakAttackMontage);
 
 		// 몽타주 종료 이벤트에 등록할 델리게이트 설정.
 		FOnMontageEnded OnMontageEnded;
@@ -190,6 +203,35 @@ void AKZCharacterBase::WeakAttackBegin()
 		GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_None);
 	}
 
+}
+
+// 차지어택 시작 함수.
+void AKZCharacterBase::ChargeWeakAttackBegin(bool bIsCharged)
+{
+
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && WeakAttackMontage)
+	{
+		// 현재 섹션의 이름을 가져와서 Wait 혹은 Hold인 상황을 확인.
+		// 약공격 몽타주는 Wait -> Hold(loop)를 하게 되어있음.
+		FName CurrentSection = AnimInstance->Montage_GetCurrentSection(WeakAttackMontage);
+		int32 ComboNum = CurrentCombo;
+
+		if (CurrentSection.ToString().Contains(TEXT("Wait")) || CurrentSection.ToString().Contains(TEXT("Hold")))
+		{
+			FName JumpSection;
+			if (bIsCharged)
+			{
+				JumpSection = *FString::Printf(TEXT("ChargeWeakAtk0%d"), ComboNum);
+			}
+			else
+			{
+				JumpSection = *FString::Printf(TEXT("WeakAtk0%d"), ComboNum);
+			}
+			AnimInstance->Montage_JumpToSection(JumpSection, WeakAttackMontage);
+		}
+
+	}
 }
 
 // 강공격 시작.
@@ -215,6 +257,7 @@ void AKZCharacterBase::StrongAttackBegin()
 	}
 }
 
+// 공격 종료 후에 실행되는 함수,
 void AKZCharacterBase::AttackActionEnd(UAnimMontage* TargetMontage, bool bInterrupted)
 {
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
@@ -232,6 +275,7 @@ void AKZCharacterBase::AttackActionEnd(UAnimMontage* TargetMontage, bool bInterr
 	GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
 }
 
+// 공격이 끝났는지 확인하는 함수.
 void AKZCharacterBase::AttackEndCheck()
 {
 
@@ -251,6 +295,7 @@ void AKZCharacterBase::LaunchCharacterNotify(float LaunchForce)
 	//GetCharacterMovement()->MovementMode = EMovementMode::MOVE_None;
 }
 
+// 가드 몽타주 실행 함수.
 void AKZCharacterBase::PlayGuardMontage()
 {
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
@@ -263,6 +308,7 @@ void AKZCharacterBase::PlayGuardMontage()
 	}
 }
 
+// 회피 몽타주 실행 함수.
 void AKZCharacterBase::PlayDodgeMontage(FName Section)
 {
 	if (DodgeMontage && bIsDodge == false)
@@ -284,6 +330,7 @@ void AKZCharacterBase::DodgeMontageEnd(UAnimMontage* TargetMontage, bool bInterr
 	bIsDodge = false;
 }
 
+// 회피 방향을 반환하는 함수.
 FName AKZCharacterBase::DetermineDodgeSection(float Angle)
 {
 	if (Angle > -22.5f && Angle <= 22.5f)

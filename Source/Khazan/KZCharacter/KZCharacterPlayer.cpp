@@ -218,6 +218,18 @@ void AKZCharacterPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 			this,
 			&AKZCharacterPlayer::WeakAttack
 		);
+		EnhancedInputComponent->BindAction(
+			WeakAttackAction,
+			ETriggerEvent::Triggered,
+			this,
+			&AKZCharacterPlayer::WeakAttackTriggered
+		);
+		EnhancedInputComponent->BindAction(
+			WeakAttackAction,
+			ETriggerEvent::Completed,
+			this,
+			&AKZCharacterPlayer::WeakAttackCompleted
+		);
 
 		EnhancedInputComponent->BindAction(
 			StrongAttackAction,
@@ -360,9 +372,40 @@ void AKZCharacterPlayer::WeakAttack(const FInputActionValue& value)
 	{
 		return;
 	}
+	bIsCharging = true;
+	CurrentChargeTime = 0.0f;
+
+	if (CurrentAttackType != EAttackType::None)
+	{
+		ProcessAttackCommand(EAttackType::Weak);
+		return;
+	}
 
 	ProcessAttackCommand(EAttackType::Weak);
 }
+
+// 차징 시간을 확인하기 위해 설정.
+void AKZCharacterPlayer::WeakAttackTriggered(const FInputActionValue& value)
+{
+	if (bIsCharging)
+	{
+		CurrentChargeTime += GetWorld()->GetDeltaSeconds();
+	}
+}
+
+void AKZCharacterPlayer::WeakAttackCompleted(const FInputActionValue& value)
+{
+	if (!bIsCharging) return;
+
+	// 차징한 시간이 일정 시간보다 길면 차징공격하도록 설정.
+	bool bIsChargedAttack = (CurrentChargeTime >= ChargeThreshold);
+
+	ChargeWeakAttackBegin(bIsChargedAttack);
+
+	bIsCharging = false;
+	CurrentChargeTime = 0.0f;
+}
+
 
 void AKZCharacterPlayer::StrongAttack(const FInputActionValue& value)
 {
@@ -383,6 +426,8 @@ void AKZCharacterPlayer::UiTest()
 
 	m_pStatComponent->Delegate_OnHpChanged.Broadcast(m_pStatComponent->GetCurrentHp());
 }
+
+
 
 void AKZCharacterPlayer::Guard(const FInputActionValue& value)
 {
