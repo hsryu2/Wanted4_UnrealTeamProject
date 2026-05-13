@@ -4,6 +4,8 @@
 #include "KZCharacterBase.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Components/BoxComponent.h"
+#include "../Collision/KZCollision.h"
 
 // Sets default values
 AKZCharacterBase::AKZCharacterBase()
@@ -42,6 +44,7 @@ AKZCharacterBase::AKZCharacterBase()
 	Weapon = CreateDefaultSubobject<USkeletalMeshComponent>(
 		TEXT("Weapon")
 	);
+	WeaponCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("WeaponCollision"));
 
 	static ConstructorHelpers::FObjectFinder<USkeletalMesh> WeaponMeshRef(
 		TEXT("/Game/Khazan/Weapon/Khazan_GS_Weapon.Khazan_GS_Weapon")
@@ -50,9 +53,20 @@ AKZCharacterBase::AKZCharacterBase()
 	{
 		WeaponMesh = WeaponMeshRef.Object;
 
+		WeaponCollision->SetupAttachment(Weapon);
+
+		WeaponCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+		WeaponCollision->SetCollisionObjectType(ECC_WorldDynamic);
+		WeaponCollision->SetCollisionResponseToAllChannels(ECR_Ignore);
+		WeaponCollision->SetCollisionResponseToChannel(C_CHANNEL_MONSTER, ECR_Overlap);
+
+		WeaponCollision->OnComponentBeginOverlap.AddDynamic(this, &AKZCharacterBase::OnWeaponOverlap);
 
 		Weapon->SetSkeletalMesh(WeaponMesh.Get());
 		Weapon->SetupAttachment(GetMesh(), TEXT("Weapon_R"));
+
+
 	}
 
 	static ConstructorHelpers::FObjectFinder<UAnimMontage> DodgeMontageRef(
@@ -308,6 +322,47 @@ void AKZCharacterBase::PlayGuardMontage()
 	}
 }
 
+//  공격 했을 때만 무기의 콜리전 켜기 / 끄기
+void AKZCharacterBase::EnableWeaponCollision()
+{
+	WeaponCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+}
+
+void AKZCharacterBase::DisableWeaponCollision()
+{
+	WeaponCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+}
+
+// 무기와 상대가 충돌했을 경우에 실행되는 함수.
+void AKZCharacterBase::OnWeaponOverlap(
+	UPrimitiveComponent* OverlappedComponent,
+	AActor* OtherActor, UPrimitiveComponent* OtherComp,
+	int32 OtherBodyIndex,
+	bool bFromSweep, const FHitResult& SweepResult)
+{
+	// 하나의 대상에게 중복 처리를 방지하기 위해 배열을 이용.
+	if (AlreadyHitActor.Contains(OtherActor))
+	{
+		return;
+	}
+
+	// 이미 배열에 있는 대상이라면 리턴, 없으면 배열에 추가.
+	AlreadyHitActor.Add(OtherActor);
+
+	//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("공격 성공!"));
+
+	// 인터페이스를 이용해 무기의 데미지 데이터와 공격한 사람의 정보만 던져줌.
+	IKZDamageInterface* DamagebleTarget = Cast<IKZDamageInterface>(OtherActor);
+	if (DamagebleTarget)
+	{
+		FDamageData Data;
+		Data.DamageAmount = 50.0f;
+		Data.Attacker = this;
+
+		DamagebleTarget->ProcessDamage(Data);
+	}
+}
+
 // 회피 몽타주 실행 함수.
 void AKZCharacterBase::PlayDodgeMontage(FName Section)
 {
@@ -371,3 +426,5 @@ FName AKZCharacterBase::DetermineDodgeSection(float Angle)
 	}
 
 }
+
+

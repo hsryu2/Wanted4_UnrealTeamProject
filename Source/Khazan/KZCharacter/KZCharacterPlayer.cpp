@@ -220,7 +220,7 @@ void AKZCharacterPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 		);
 		EnhancedInputComponent->BindAction(
 			WeakAttackAction,
-			ETriggerEvent::Triggered,
+			ETriggerEvent::Triggered,       
 			this,
 			&AKZCharacterPlayer::WeakAttackTriggered
 		);
@@ -451,3 +451,15 @@ void AKZCharacterPlayer::StopGuard(const FInputActionValue& value)
 	//StopAnimMontage(GuardMontage);
 }
 
+// 데미지를 받은 입장.
+void AKZCharacterPlayer::ProcessDamage(const FDamageData& DamageData)
+{
+
+	//float FinalDamage = DamageData.DamageAmount;
+
+	if (m_pStatComponent)
+	{
+		m_pStatComponent->Apply_Damage(DamageData.DamageAmount);
+	}
+
+}
