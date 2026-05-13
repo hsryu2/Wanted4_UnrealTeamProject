@@ -7,6 +7,8 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Navigation/PathFollowingComponent.h"
 
+#include "../Component/StatComponent.h"
+
 // Sets default values
 AKZBossCharacter::AKZBossCharacter()
 {
@@ -14,6 +16,10 @@ AKZBossCharacter::AKZBossCharacter()
 	PrimaryActorTick.bCanEverTick = true;
 	CurrentMovementSpeed = 0.0f;
 	CurrentPhase = EBossPhase::Phase1A;
+
+	
+	m_pStatComponent = CreateDefaultSubobject<UStatComponent>(TEXT("StatComponent"));
+	m_pStatComponent->SetUp_stat_Hp(100, 100);
 
 	// 루트 모션 사용 시 물리 회전/이동 허용
 	GetCharacterMovement()->bAllowPhysicsRotationDuringAnimRootMotion = true;
@@ -107,5 +113,16 @@ void AKZBossCharacter::ExecuteBackStep()
 	FVector LaunchVelocity = 0.66 * (BackDir * Distance + FVector(0, 0, UpForce));
 	UE_LOG(LogTemp, Warning, TEXT("BackStep Execute! Vector: %s"), *LaunchVelocity.ToString());
 	LaunchCharacter(LaunchVelocity, true, true);
+}
+// 인터페이스 구현한 부분 - 현석
+// 데미지를 받았을 때 보스 몬스터의 방어력같은 것을 고려한다면, 여기서 데미지 계산을 해주면 됨.
+void AKZBossCharacter::ProcessDamage(const FDamageData& DamageData)
+{
+	if (m_pStatComponent)
+	{
+		m_pStatComponent->Apply_Damage(DamageData.DamageAmount);
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Damage"));
+	}
+
 }
 
